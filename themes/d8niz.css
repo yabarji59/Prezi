@@ -1,0 +1,89 @@
+/* @theme d8niz */
+
+@import "default";
+
+/* Style global pour toutes les sections */
+section {
+  background-color: #212121;
+  color: #fff;
+  background-image: url("assets/eteration-logo-dark.png");
+  background-repeat: no-repeat;
+  background-position: right 40px top 40px;
+  background-size: 8%;
+  display: flex; /* Active Flexbox pour organiser le contenu */
+  flex-direction: column; /* Organise le contenu en colonne unique */
+  justify-content: space-between; /* Pied de page en bas */
+  height: 100vh; /* Assure une hauteur de page complète */
+}
+
+/* Style pour les sections avec la classe lead */
+section.lead {
+  background-image: url("assets/academy-logo.svg"), url("assets/academy.jpg");
+  background-size: 40%, 65%;
+  background-position: center top 290px, right 100px top 40px;
+  background-repeat: no-repeat, round;
+}
+
+/* Style pour titres, pieds de page, et pagination */
+section h1,
+section h2,
+section footer,
+section::after {
+  color: #ff6600;
+}
+
+/* Style pour les tableaux */
+section table,
+section th,
+section td,
+section tr {
+  background-color: #212121;
+  color: whitesmoke;
+}
+
+/* Style pour les liens */
+section a {
+  color: lightskyblue;
+}
+
+/* Ajoute le préfixe "Page" et le nombre total de pages */
+section::after {
+  content: attr(data-marpit-pagination) " / " attr(data-marpit-pagination-total);
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: #ff6600;
+}
+
+/* Pied de page couvrant toute la largeur */
+section footer {
+  width: 100%; /* Étend le pied de page sur toute la largeur */
+  height: 50px; /* Ajustez la hauteur si nécessaire */
+  text-align: center; /* Centrage du texte */
+  background-color: rgba(0, 0, 0, 0.9); /* Fond sombre */
+  color: #ff6600; /* Couleur du texte */
+  padding: 0; /* Supprime les marges internes */
+  margin: 0; /* Supprime les marges externes */
+  border: none; /* Supprime les bordures */
+  z-index: 10; /* S'assure que le pied de page est au-dessus des autres éléments */
+  box-sizing: border-box; /* Gère correctement largeur et padding */
+  display: flex; /* Active Flexbox dans le pied de page */
+  align-items: center; /* Centrage vertical du texte */
+  justify-content: center; /* Centrage horizontal du texte */
+}
+
+/* Gestion des diapositives */
+section.split-layout {
+  flex: 1; /* Remplit l'espace disponible au-dessus du pied de page */
+  display: flex; /* Active Flexbox pour le contenu */
+  flex-direction: column; /* Organise tout le contenu en colonne unique */
+  gap: 20px; /* Espacement entre les éléments */
+}
+
+/* Chaque élément dans une section */
+section.split-layout > * {
+  flex: 0; /* Laisse chaque élément prendre sa taille naturelle */
+  min-width: 0; /* Empêche les débordements */
+}

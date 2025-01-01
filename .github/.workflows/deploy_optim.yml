@@ -1,0 +1,75 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Le pipeline s'exécute lorsqu'il y a un push sur la branche "main".
+
+jobs:
+  lint-and-quality:
+    name: Linter et Analyse de Qualité
+    runs-on: ubuntu-latest  # Exécute ce job sur un environnement Ubuntu.
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3  # Action officielle pour récupérer le code source depuis le dépôt GitHub.
+
+      - name: Install dependencies
+        run: npm install  # Installe les dépendances spécifiées dans "package.json".
+
+      - name: Run linter
+        run: npm run lint  # Exécute le linter pour détecter les erreurs de style ou de syntaxe dans le code.
+
+      - name: Analyze code quality
+        run: npx eslint . --max-warnings=0  # Exécute ESLint pour analyser le code et s'assurer qu'il n'y a pas d'avertissements.
+
+  refactor:
+    name: Refactorisation automatique
+    runs-on: ubuntu-latest  # Utilise un environnement Ubuntu.
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3  # Récupère le code source.
+
+      - name: Install dependencies
+        run: npm install  # Installe les dépendances requises.
+
+      - name: Run refactor
+        run: npx prettier --write .  # Utilise Prettier pour reformater automatiquement le code.
+
+  tests:
+    name: Tests unitaires
+    runs-on: ubuntu-latest  # Utilise Ubuntu pour exécuter les tests.
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3  # Récupère le code source depuis le dépôt GitHub.
+
+      - name: Install dependencies
+        run: npm install  # Installe les dépendances pour exécuter les tests.
+
+      - name: Run tests
+        run: npm test -- --coverage  # Exécute les tests unitaires et génère un rapport de couverture du code.
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v3  # Action pour sauvegarder les fichiers de couverture de code.
+        with:
+          name: coverage-report  # Nom de l'archive créée.
+          path: coverage/  # Chemin vers le rapport de couverture.
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [lint-and-quality, refactor, tests]  # Ce job ne démarre qu'après le succès des jobs listés.
+    runs-on: ubuntu-latest  # Environnement Ubuntu.
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3  # Récupère le code source du dépôt GitHub.
+
+      - name: Install dependencies
+        run: npm install  # Installe les dépendances nécessaires pour construire le projet.
+
+      - name: Build project
+        run: npm run build  # Compile le projet et génère les fichiers prêts à être déployés.
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3  # Action dédiée au déploiement sur GitHub Pages.
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Utilise le token GitHub pour authentifier le déploiement.
+          publish_dir: ./dist  # Chemin vers les fichiers compilés à publier (généralement "dist").
