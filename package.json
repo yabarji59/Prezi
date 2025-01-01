@@ -1,0 +1,22 @@
+{
+  "name": "prezi",
+  "version": "1.0.0",
+  "description": "Marp Presentation",
+  "main": "pitchme.md",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yabarji59/Prezi.git"
+  },
+  "author": "Yassen ABARJI",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yabarji59/Prezi/issues"
+  },
+  "homepage": "https://github.com/yabarji59/Prezi#readme",
+  "dependencies": {
+    "@marp-team/marp-cli": "^4.0.4"
+  }
+}
