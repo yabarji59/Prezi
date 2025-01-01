@@ -5,71 +5,53 @@ on:
     branches:
       - main  # Le pipeline s'exécute lorsqu'il y a un push sur la branche "main".
 
+  workflow_dispatch:  # Permet de déclencher manuellement ce workflow depuis l'onglet Actions.
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  lint-and-quality:
-    name: Linter et Analyse de Qualité
-    runs-on: ubuntu-latest  # Exécute ce job sur un environnement Ubuntu.
+  build:
+    name: Build Marp Presentation
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3  # Action officielle pour récupérer le code source depuis le dépôt GitHub.
+        uses: actions/checkout@v4  # Récupère le code source depuis le dépôt GitHub.
 
       - name: Install dependencies
-        run: npm install  # Installe les dépendances spécifiées dans "package.json".
+        run: npm install  # Installe les dépendances nécessaires pour construire la présentation.
 
-      - name: Run linter
-        run: npm run lint  # Exécute le linter pour détecter les erreurs de style ou de syntaxe dans le code.
+      - name: Build Marp slides
+        run: npx @marp-team/marp-cli slide-deck.md --html --output ./dist/index.html  # Compile la présentation Marp en fichier HTML.
 
-      - name: Analyze code quality
-        run: npx eslint . --max-warnings=0  # Exécute ESLint pour analyser le code et s'assurer qu'il n'y a pas d'avertissements.
-
-  refactor:
-    name: Refactorisation automatique
-    runs-on: ubuntu-latest  # Utilise un environnement Ubuntu.
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3  # Récupère le code source.
-
-      - name: Install dependencies
-        run: npm install  # Installe les dépendances requises.
-
-      - name: Run refactor
-        run: npx prettier --write .  # Utilise Prettier pour reformater automatiquement le code.
-
-  tests:
-    name: Tests unitaires
-    runs-on: ubuntu-latest  # Utilise Ubuntu pour exécuter les tests.
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3  # Récupère le code source depuis le dépôt GitHub.
-
-      - name: Install dependencies
-        run: npm install  # Installe les dépendances pour exécuter les tests.
-
-      - name: Run tests
-        run: npm test -- --coverage  # Exécute les tests unitaires et génère un rapport de couverture du code.
-
-      - name: Upload test coverage
-        uses: actions/upload-artifact@v3  # Action pour sauvegarder les fichiers de couverture de code.
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3  # Sauvegarde les fichiers générés comme un artefact pour le déploiement.
         with:
-          name: coverage-report  # Nom de l'archive créée.
-          path: coverage/  # Chemin vers le rapport de couverture.
+          name: build-artifact  # Nom de l'artefact créé.
+          path: ./dist  # Chemin vers les fichiers compilés.
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: [lint-and-quality, refactor, tests]  # Ce job ne démarre qu'après le succès des jobs listés.
-    runs-on: ubuntu-latest  # Environnement Ubuntu.
+    needs: build  # Ce job dépend du job de build.
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages  # Définit l'environnement pour le déploiement.
+      url: ${{ steps.deployment.outputs.page_url }}  # URL du site déployé.
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3  # Récupère le code source du dépôt GitHub.
-
-      - name: Install dependencies
-        run: npm install  # Installe les dépendances nécessaires pour construire le projet.
-
-      - name: Build project
-        run: npm run build  # Compile le projet et génère les fichiers prêts à être déployés.
+      - name: Download artifact
+        uses: actions/download-pages-artifact@v3  # Télécharge les fichiers générés pour le déploiement.
+        with:
+          name: build-artifact  # Nom de l'artefact à télécharger.
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3  # Action dédiée au déploiement sur GitHub Pages.
+        id: deployment
+        uses: actions/deploy-pages@v4  # Déploie les fichiers sur GitHub Pages.
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}  # Utilise le token GitHub pour authentifier le déploiement.
-          publish_dir: ./dist  # Chemin vers les fichiers compilés à publier (généralement "dist").
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Utilise le token GitHub pour l'authentification.
+          publish_dir: ./dist  # Chemin vers les fichiers à publier.
