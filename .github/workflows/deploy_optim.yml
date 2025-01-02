@@ -1,77 +1,57 @@
-name: marp-to-pages
-concurrency: marp-to-pages
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - closed
+    branches:
+      - main  # Le pipeline s'exécute lorsqu'il y a un push sur la branche "main".
+
+  workflow_dispatch:  # Permet de déclencher manuellement ce workflow depuis l'onglet Actions.
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
+    name: Build Marp Presentation
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Récupère le code source depuis le dépôt GitHub.
 
-      - name: Ensure build dir exists
-        run: mkdir -p build
+      - name: Install dependencies
+        run: npm install  # Installe les dépendances nécessaires pour construire la présentation.
 
-      - name: Copy images directory (if exists)
-        run: if [[ -d img ]]; then cp -R img build/img; fi
+      - name: Build Marp slides
+        run: npx @marp-team/marp-cli slide-deck.md --html --output ./dist/index.html  # Compile la présentation Marp en fichier HTML.
 
-      - name: Marp Build (pitchme)
-        uses: docker://marpteam/marp-cli:v3.0.2
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3  # Sauvegarde les fichiers générés comme un artefact pour le déploiement.
         with:
-          args: pitchme.md -o build/index.html
-        env:
-          MARP_USER: root:root
-
-      - name: Marp Build (pitchme.pdf)
-        uses: docker://marpteam/marp-cli:v3.0.2
-        with:
-          args: pitchme.md --allow-local-files -o build/pitchme.pdf
-        env:
-          MARP_USER: root:root
-
-      - name: Marp Build (pitchme.pptx)
-        uses: docker://marpteam/marp-cli:v3.0.2
-        with:
-          args: pitchme.md --allow-local-files -o build/pitchme.pptx
-        env:
-          MARP_USER: root:root
-
-      - name: Check if docs folder exists
-        id: docs-folder-exists
-        run: bash -c "[[ -d docs ]] ; echo \"has_docs=\$?\" >> \"$GITHUB_OUTPUT\""
-
-      - name: Marp Build (docs folder, if exists)
-        if: steps.docs-folder-exists.outputs.has_docs == '0'
-        uses: docker://marpteam/marp-cli:v3.0.2
-        with:
-          args: -I docs/ -o build/docs/
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: github-pages
-          path: build
+          name: build-artifact  # Nom de l'artefact créé.
+          path: ./dist  # Chemin vers les fichiers compilés.
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: build
+    needs: build  # Ce job dépend du job de build.
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+    environment:
+      name: github-pages  # Définit l'environnement pour le déploiement.
+      url: ${{ steps.deployment.outputs.page_url }}  # URL du site déployé.
     steps:
+      - name: Download artifact
+        uses: actions/download-pages-artifact@v3  # Télécharge les fichiers générés pour le déploiement.
+        with:
+          name: build-artifact  # Nom de l'artefact à télécharger.
+
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+        id: deployment
+        uses: actions/deploy-pages@v4  # Déploie les fichiers sur GitHub Pages.
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Utilise le token GitHub pour l'authentification.
+          publish_dir: ./dist  # Chemin vers les fichiers à publier.
