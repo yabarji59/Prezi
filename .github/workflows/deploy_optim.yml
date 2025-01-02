@@ -65,20 +65,14 @@ jobs:
           name: github-pages
           path: build
 
+# Deployment job
   deploy:
-    name: Deploy to GitHub Pages
-    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+    needs: build
     steps:
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: github-pages
-
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
