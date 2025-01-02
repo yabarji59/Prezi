@@ -28,7 +28,7 @@ jobs:
         run: npm install  # Installe les dépendances nécessaires pour construire la présentation.
 
       - name: Build Marp slides
-        run: npx @marp-team/marp-cli slide-deck.md --html --output ./dist/index.html  # Compile la présentation Marp en fichier HTML.
+        run: npx @marp-team/marp-cli pitchme.md --html --output ./dist/index.html  # Compile la présentation Marp en fichier HTML.
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3  # Sauvegarde les fichiers générés comme un artefact pour le déploiement.
